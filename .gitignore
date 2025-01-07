@@ -1,0 +1,8 @@
+tests/
+__pycache__/
+clearfacts/cache/*
+!clearfacts/cache/__init__.py
+dist/
+Pipfile.lock
+python_clearfacts_api.egg-info/*
+env
