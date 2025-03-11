@@ -1,5 +1,6 @@
 import json
 import os
+import requests
 
 from .base import APIMethod
 from clearfacts.models.invoices import InvoiceUploaded
@@ -22,28 +23,29 @@ class InvoiceMethods(APIMethod):
         if not os.path.exists(local_file_path):
             raise FileNotFoundError(f"File not found at path: {local_file_path}")
         
-        mutation = """
-            mutation upload($vatnumber: String!, $filename: String!, $invoicetype: InvoiceTypeArgument!) {
-                uploadFile(vatnumber: $vatnumber, filename: $filename, invoicetype: $invoicetype) {
-                    uuid
-                    amountOfPages
-                }
-            }
-        """
+        query = """mutation upload($vatnumber: String!, $filename: String!, $invoicetype: InvoiceTypeArgument!) {
+        uploadFile(vatnumber: $vatnumber, filename: $filename, invoicetype: $invoicetype) { 
+            uuid,
+            amountOfPages
+            } 
+        }"""
 
         variables = {
             "vatnumber": vat_number,
             "filename": file_name,
-            "invoicetype": invoice_type,
+            "invoicetype": "SALE"
         }
 
-        with open(local_file_path, "rb") as file_data:
-            status, headers, response = self.api.post(
-                data={"query": mutation, "variables": json.dumps(variables)},
-                files={
-                    "file": (file_name, file_data, "application/pdf")
-                }
-            )
+        files = {
+            'file': open(local_file_path, 'rb')
+        }
+
+        data = {
+            "query": query,
+            "variables": json.dumps(variables)
+        }
+
+        status, headers, response = self.api.post(data=data, files=files)
 
         if status != 200:
             raise APIError(Errors().parse(response))

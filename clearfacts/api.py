@@ -10,10 +10,8 @@ class ClearFactsAPI:
 
     def __init__(self, token: str | None = None) -> None:
         self.token = token
-
         self.headers = {
-            'Accept' : 'application/json',
-            'Content-Type' : 'application/json',
+            "Content-Type": "application/json",
         }
 
         self.base_url = config.BASE_URL
@@ -37,8 +35,12 @@ class ClearFactsAPI:
         if method == 'GET':
             response = requests.get(url, params=data, headers=headers)
         elif method == 'POST':
-            if files: response = requests.post(url, data=data, files=files, headers=headers)
-            else: response = requests.post(url, data=json.dumps(data), headers=headers)
+
+            if files:
+                headers.pop('Content-Type', None)
+                response = requests.post(url, headers=headers, data=data, files=files)
+            else:
+                response = requests.post(url, headers=headers, json=data)
 
         return response
 

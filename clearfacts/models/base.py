@@ -34,20 +34,46 @@ class BaseModel:
     
     @staticmethod
     def camel_to_snake_case(name):
-        return re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
     
-class Errors(BaseModel):
-    
-    def __init__(
-        self,
-        errors=None
-    ):
-        
-        self.errors = errors
+class ObjectListModel(BaseModel):
 
+    list_object = None
+
+    def __init__(self):
+        self.list = []
+
+    def __iter__(self):
+        return iter(self.list)
+    
+    def add(self, item):
+        self.list.append(item)
+        return self.list
+    
+    def remove(self, item):
+        self.list.remove(item)
+        return self.list
+    
     def parse(self, json):
-        self.errors = [Error().parse(error) for error in json.get('errors', [])]
+
+        if isinstance(json, dict):
+            item = self.list_object().parse(json)
+            self.add(item)
+        elif isinstance(json, list):
+            for item in json:
+                item = self.list_object().parse(item)
+                self.add(item)
+
         return self
+    
+    def get_json(self):
+        list = []
+
+        for item in self.list:
+            list.append(item.get_json())
+        
+        return list
 
 class Error(BaseModel):
     
@@ -57,3 +83,6 @@ class Error(BaseModel):
     ):
         
         self.message = message
+
+class Errors(ObjectListModel):
+    list_object = Error
